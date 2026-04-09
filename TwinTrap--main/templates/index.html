@@ -1,0 +1,573 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TwinTrap - Fake WiFi Detection Tool</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+</head>
+<body>
+
+<!-- Toggle Button -->
+<button class="menu-toggle" id="menuToggle">
+  ☰
+</button>
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <h2 class="logo-text">TwinTrap</h2>
+    <i class="bx bxl-audible icon"></i>
+  </div>
+
+  <ul class="sidebar-menu">
+    <li><a href="#" data-page="home" class="active">Dashboard</a></li>
+    <li><a href="#" data-page="analyze">Analyze</a></li>
+    <li><a href="#" data-page="results">Results</a></li>
+    <li><a href="#" data-page="about">About</a></li>
+  </ul>
+
+  <div class="sidebar-footer">
+    <button>Logout</button>
+  </div>
+</aside>
+
+<!-- ================= MAIN CONTENT ================= -->
+<main role="main">
+  <!-- Home -->
+  <section id="home" class="page active">
+    <div class="home-container">
+      <h1 class="glow-title">TwinTrap</h1>
+      <p class="subtitle">
+        AI-powered <strong>Fake WiFi Detection System</strong> — identify, analyze, and defend against
+        <span class="highlight">Evil Twin Attacks</span> with precision.
+      </p>
+
+      <div class="cta-buttons">
+        <button class="btn-primary" onclick="showPage('analyze')">Start Scan</button>
+        <button class="btn-secondary" onclick="showPage('about')">Learn More</button>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card">
+          <h3>Real-Time Scanning</h3>
+          <p>Instantly detect rogue access points and spoofed SSIDs using smart algorithms.</p>
+        </div>
+        <div class="feature-card">
+          <h3>Secure Analysis</h3>
+          <p>All network data is processed locally for maximum user privacy and safety.</p>
+        </div>
+        <div class="feature-card">
+          <h3>AI-Driven Detection</h3>
+          <p>Leverage machine learning to identify anomalies in WiFi signal patterns.</p>
+        </div>
+        <div class="feature-card">
+          <h3>Intelligent Insights</h3>
+          <p>Gain clear insights into potential threats with easy-to-read visual analytics.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- ================================
+     Analyze Section — TwinTrap v2
+ ================================= -->
+<section id="analyze" class="page analyze-page">
+  <div class="analyze-container">
+    <header class="analyze-header">
+      <h1 class="page-title">Wi-Fi Threat Analyzer</h1>
+      <p class="page-subtitle">
+        Detect nearby networks, analyze their security, and identify potential fake access points.
+      </p>
+    </header>
+
+    <div class="analyze-dashboard">
+      <!-- Left Control Panel -->
+      <div class="analyze-control-panel">
+        <h2>Scan Controls</h2>
+
+        <div class="analyze-control-group">
+          <label for="interfaceSelect">Select Interface</label>
+          <select id="interfaceSelect" class="analyze-interface-select">
+            <option value="wlan0">wlan0</option>
+            <option value="wlan1">wlan1</option>
+          </select>
+        </div>
+
+        <div class="analyze-control-group">
+          <button id="startScanBtn" class="analyze-scan-btn" onclick="startScan()">Start Scan</button>
+          <button id="stopScanBtn" class="analyze-scan-btn" onclick="stopScan()" style="display: none;">Stop Scan</button>
+          <div class="analyze-status" id="status">🟢 Idle</div>
+        </div>
+
+        <!-- Live Scan Progress Chart -->
+        <div class="analyze-control-group">
+          <h3>Scan Progress</h3>
+          <canvas id="scanChart" height="120"></canvas>
+        </div>
+      </div>
+
+      <!-- Live alerts from ESP8266 -->
+      <div class="analyze-control-group">
+        <h2>Current Alerts</h2>
+        <div id="alerts" class="alert-container"></div>
+      </div>
+
+      <!-- Scan log table -->
+      <div class="analyze-control-group">
+        <h2>Scan Log</h2>
+        <table id="scan-table" class="scan-table">
+          <thead>
+            <tr>
+              <th>Time&nbsp;&nbsp;</th>
+              <th>Device&nbsp;&nbsp;</th>
+              <th>SSID&nbsp;&nbsp;</th>
+              <th>BSSID&nbsp;&nbsp;</th>
+              <th>Channel&nbsp;&nbsp;</th>
+              <th>Signal&nbsp;&nbsp;</th>
+              <th>Security</th>
+            </tr>
+          </thead>
+          <tbody id="log-body">
+            <tr class="empty-state">
+              <td colspan="7" style="text-align: center; color: #6b7280;">
+                No scan data yet. Click <strong>Start Scan</strong> to begin.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================
+     Results Section — TwinTrap v2
+ ================================= -->
+<section id="results" class="page">
+  <div class="results-header">
+    <h1><i class="fas fa-wave-square"></i> Scan Results</h1>
+    <p>Review your analyzed access points, verify authenticity, and export full network intelligence reports.</p>
+  </div>
+
+  <div class="results-toolbar">
+    <div class="filter-group">
+      <label for="filterVerdict">Filter:</label>
+      <select id="filterVerdict" onchange="filterResults(this.value)">
+        <option value="all">All Networks</option>
+        <option value="good">Good</option>
+        <option value="suspicious">Suspicious</option>
+        <option value="malicious">Malicious</option>
+      </select>
+    </div>
+    <button class="export-btn" onclick="exportResults()">
+      <i class="fas fa-download"></i> Export JSON
+    </button>
+  </div>
+
+  <div class="results-summary">
+    <div class="summary-card good">
+      <span class="label">Trusted</span>
+      <span id="count-good" class="count">0</span>
+    </div>
+    <div class="summary-card suspicious">
+      <span class="label">Suspicious</span>
+      <span id="count-suspicious" class="count">0</span>
+    </div>
+    <div class="summary-card malicious">
+      <span class="label">Malicious</span>
+      <span id="count-malicious" class="count">0</span>
+    </div>
+  </div>
+
+  <div id="resultsGridFull" class="results-grid">
+    <!-- dynamically populated by JS -->
+  </div>
+
+  <div id="results-alerts" class="results-alerts"></div>
+
+  <div class="disclaimer">
+    <strong>Disclaimer:</strong> Results are simulation data for demo purposes.
+    Always verify findings with official security tools.
+  </div>
+</section>
+
+<!-- About -->
+<section id="about" class="page">
+  <div class="container">
+    <h1>About Fake WiFi Detection</h1>
+    <p>Version 1.0 — Open-source tool to detect rogue WiFi hotspots. Use responsibly.</p>
+
+    <div class="disclaimer">
+      <strong>Legal Notice:</strong> Unauthorized network scanning may be illegal.
+    </div>
+
+    <section id="about-details">
+      <h2 class="qa-title">💡 About: Fake WiFi Detection & Security Awareness</h2>
+
+      <div class="qa-container">
+        <!-- ... your QA cards ... -->
+        <button onclick="showPage('home')" class="btn">⬅ Back</button>
+      </div>
+    </section>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <p>&copy; 2025 TwinTrap. For educational use only.</p>
+</footer>
+
+<!-- JS should be loaded at the end of body -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='main.js') }}"></script>
+
+<!-- TwinTrap Live Feed -->
+<script>
+(function () {
+  // ── Elements ───────────────────────────────────────
+  const logTable    = document.querySelector('#log-body');           // Analyze table
+  const alertBox    = document.querySelector('#alerts');             // Analyze alerts
+  const statusDot   = document.querySelector('#status');             // "Live / Offline"
+  const resultsGrid = document.querySelector('#resultsGridFull');    // Results grid
+  const resultsAlerts = document.querySelector('#results-alerts');   // Results alerts
+  const countGood   = document.getElementById('count-good');
+  const countSusp   = document.getElementById('count-suspicious');
+  const countMal    = document.getElementById('count-malicious');
+
+  // Track unique networks: ssid||bssid
+  const seenNetworks = new Map(); // key = ssid + "||" + bssid
+
+  function setStatus(connected) {
+    if (!statusDot) return;
+    statusDot.textContent = connected ? '● Live' : '○ Offline';
+    statusDot.style.color = connected ? '#16a34a' : '#dc2626';
+  }
+
+  // ── Analyze table row ───────────────────────────────
+  function appendScanRow(scan, deviceId) {
+    if (!logTable) return;
+
+    // Remove empty-state message when first row comes
+    const emptyRow = logTable.querySelector('.empty-state');
+    if (emptyRow) {
+      logTable.removeChild(emptyRow);
+    }
+
+    const tr = document.createElement('tr');
+    const rssiColor = scan.rssi > -60 ? '#16a34a' : scan.rssi > -75 ? '#ca8a04' : '#dc2626';
+
+    tr.innerHTML = `
+      <td>${new Date().toLocaleTimeString()}</td>
+      <td>${deviceId || ''}</td>
+      <td>${scan.ssid || '(hidden)'}</td>
+      <td style="font-family:monospace;font-size:12px">${scan.bssid || ''}</td>
+      <td>${scan.channel || ''}</td>
+      <td style="color:${rssiColor}">${scan.rssi} dBm</td>
+      <td>${scan.open ? '<span style="color:#dc2626">Open</span>' : 'Secured'}</td>
+    `;
+
+    logTable.prepend(tr);
+    while (logTable.rows.length > 100) {
+      logTable.deleteRow(-1);
+    }
+  }
+
+  // ── Analyze alert box ───────────────────────────────
+  function appendAlert(alert) {
+    if (!alertBox) return;
+    const div = document.createElement('div');
+    div.className = 'alert-item';
+    div.style.cssText = `
+      padding:10px 14px;border-radius:6px;margin-bottom:8px;
+      background:${alert.severity === 'HIGH' ? '#fee2e2' : '#fef9c3'};
+      border-left:4px solid ${alert.severity === 'HIGH' ? '#dc2626' : '#ca8a04'};
+      color:${alert.severity === 'HIGH' ? '#991b1b' : '#854d0e'};
+    `;
+    div.innerHTML = `<strong>${(alert.type||'ALERT').replace('_',' ')}</strong>
+      — ${alert.message || alert.raw || ''}
+      <span style="float:right;font-size:11px;opacity:.7">
+        ${new Date().toLocaleTimeString()}
+      </span>`;
+    alertBox.prepend(div);
+  }
+
+  // ── Results alert box ───────────────────────────────
+  function appendResultAlert(alert) {
+    if (!resultsAlerts) return;
+    const div = document.createElement('div');
+    div.className = 'result-alert';
+    div.style.cssText = `
+      padding:8px 12px;border-radius:6px;margin-bottom:6px;
+      background:${alert.severity === 'HIGH' ? '#fee2e2' : '#fef9c3'};
+      border-left:4px solid ${alert.severity === 'HIGH' ? '#dc2626' : '#ca8a04'};
+      color:${alert.severity === 'HIGH' ? '#991b1b' : '#854d0e'};
+    `;
+    div.innerHTML = `<strong>${alert.message}</strong>
+      <span style="float:right;font-size:11px;opacity:0.7;">
+        ${new Date().toLocaleTimeString()}
+      </span>`;
+    resultsAlerts.prepend(div);
+  }
+
+  // ── Verdict logic ───────────────────────────────────
+  function getVerdict(net, entry) {
+    const ssid = net.ssid || '';
+    const rssi = net.rssi || 0;
+
+    if (entry.evil_twins && Array.isArray(entry.evil_twins) && entry.evil_twins.includes(ssid)) {
+      return 'malicious';
+    }
+
+    if (rssi <= -80 || net.open === true || !ssid) {
+      return 'suspicious';
+    }
+
+    return 'good';
+  }
+
+  // ── Results card renderer ───────────────────────────
+  function renderResult(net, entry) {
+    if (!resultsGrid) return;
+
+    const ssid  = net.ssid || "(hidden)";
+    const bssid = net.bssid || "";
+    const key   = ssid + "||" + bssid;
+
+    // Skip duplicates
+    if (seenNetworks.has(key)) {
+      return;
+    }
+    seenNetworks.set(key, true);
+
+    const verdict = getVerdict(net, entry);
+
+    const card = document.createElement('div');
+    card.className = `result-card ${verdict}`;
+    card.setAttribute('data-verdict', verdict);
+
+    const security  = net.open ? 'Open' : 'Secured';
+    const rssiColor = net.rssi > -60 ? '#16a34a' : net.rssi > -75 ? '#ca8a04' : '#dc2626';
+
+    card.innerHTML = `
+      <div class="result-header">
+        <h3>${net.ssid || '(hidden SSID)'}</h3>
+        <span class="bssid-label">${net.bssid}</span>
+      </div>
+      <div class="result-body">
+        <div class="result-row">
+          <span class="label">Signal</span>
+          <span class="value" style="color:${rssiColor}">${net.rssi} dBm</span>
+        </div>
+        <div class="result-row">
+          <span class="label">Security</span>
+          <span class="value">${security}</span>
+        </div>
+        <div class="result-row">
+          <span class="label">Device</span>
+          <span class="value">${entry.device_id || 'Unknown'}</span>
+        </div>
+      </div>
+      <div class="result-footer">
+        ${net.rssi > -75 ? `
+          <span class="badge suspicious">Medium Strength</span>
+        ` : ''}
+        ${verdict === 'malicious' ? `
+          <span class="badge malicious">Evil Twin</span>
+        ` : ''}
+      </div>
+    `;
+
+    resultsGrid.prepend(card);
+    updateCounts();
+  }
+
+  // ── Update counts (good/suspicious/malicious) ───────
+  function updateCounts() {
+    if (!resultsGrid || !resultsGrid.children || resultsGrid.children.length === 0) return;
+
+    let good = 0, suspicious = 0, malicious = 0;
+
+    for (let el of resultsGrid.children) {
+      const verdict = el.getAttribute('data-verdict');
+      if (verdict === 'good')      good++;
+      if (verdict === 'suspicious') suspicious++;
+      if (verdict === 'malicious')  malicious++;
+    }
+
+    if (countGood)     countGood.textContent     = good;
+    if (countSusp)     countSusp.textContent     = suspicious;
+    if (countMal)      countMal.textContent      = malicious;
+  }
+
+  // ── Export JSON of all results ──────────────────────
+  function exportResults() {
+    const nets = Array.from(resultsGrid.children).map(el => {
+      const header = el.querySelector('.result-header h3');
+      const bssid = el.querySelector('.result-header .bssid-label');
+      const verdict = el.getAttribute('data-verdict');
+
+      return {
+        ssId: header ? header.textContent.trim() : '',
+        bssid: bssid ? bssid.textContent.trim() : '',
+        verdict: verdict
+      };
+    });
+
+    const report = {
+      generatedAt: new Date().toISOString(),
+      tool: "TwinTrap - Fake WiFi Detection Tool",
+      analysis: {
+        totalNetworks: nets.length,
+        trusted: nets.filter(n => n.verdict === 'good').length,
+        suspicious: nets.filter(n => n.verdict === 'suspicious').length,
+        malicious: nets.filter(n => n.verdict === 'malicious').length
+      },
+      networks: nets
+    };
+
+    const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `twintrap-report-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // ── Filter results ──────────────────────────────────
+  function filterResults(value) {
+    const allCards = resultsGrid.children;
+
+    for (let el of allCards) {
+      const verdict = el.getAttribute('data-verdict');
+      if (value === 'all') {
+        el.style.display = '';
+      } else {
+        el.style.display = (verdict === value ? '' : 'none');
+      }
+    }
+    updateCounts();
+  }
+
+  // ── Control: start / stop scan ──────────────────────
+  function startScan() {
+    fetch("/api/scan/start", {
+      method: "POST"
+    })
+      .then(r => r.json())
+      .then(data => {
+        document.getElementById("startScanBtn").style.display = "none";
+        document.getElementById("stopScanBtn").style.display = "";
+        setStatus(true);
+      })
+      .catch(err => {
+        console.error("Start scan failed:", err);
+      });
+  }
+
+  function stopScan() {
+    fetch("/api/scan/stop", {
+      method: "POST"
+    })
+      .then(r => r.json())
+      .then(data => {
+        document.getElementById("startScanBtn").style.display = "";
+        document.getElementById("stopScanBtn").style.display = "none";
+        setStatus(false);
+      })
+      .catch(err => {
+        console.error("Stop scan failed:", err);
+      });
+  }
+
+  // ── WebSocket with auto‑reconnect ───────────────────
+  function connect() {
+    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+    const ws = new WebSocket(`${proto}://${location.host}/ws`);
+
+    ws.onopen = () => {
+      setStatus(true);
+      console.log('[TwinTrap] WebSocket connected');
+    };
+
+    ws.onmessage = (e) => {
+      let msg;
+      try {
+        msg = JSON.parse(e.data);
+      } catch {
+        return;
+      }
+
+      if (msg.type === 'INITIAL') {
+        // 1. Apply to Analyze table
+        msg.logs.forEach(entry => {
+          (entry.scans || []).forEach(s => appendScanRow(s, entry.device_id));
+        });
+        // 2. Apply to Results grid
+        msg.logs.forEach(entry => {
+          (entry.scans || []).forEach(net => renderResult(net, entry));
+        });
+      }
+
+      if (msg.type === 'SCAN_UPDATE') {
+        const entry = msg.entry;
+        const deviceId = entry.device_id || "Unknown";
+
+        // 1. Analyze table
+        (entry.scans || []).forEach(s => appendScanRow(s, deviceId));
+        // 2. Analyze alerts
+        (entry.alerts || []).forEach(a => appendAlert(a));
+        // 3. Results cards
+        (entry.scans || []).forEach(net => renderResult(net, entry));
+        // 4. Evil Twin alerts
+        if (entry.evil_twins && Array.isArray(entry.evil_twins)) {
+          entry.evil_twins.forEach(ssid => {
+            appendAlert({
+              type: "EVIL_TWIN",
+              severity: "HIGH",
+              message: `Evil Twin detected for SSID: ${ssid}`,
+              ssid: ssid
+            });
+            appendResultAlert({
+              severity: "HIGH",
+              message: `Evil Twin detected for SSID: ${ssid}`,
+              ssid: ssid
+            });
+          });
+        }
+      }
+    };
+
+    ws.onclose = () => {
+      setStatus(false);
+      console.log('[TwinTrap] WS closed — reconnecting in 3s');
+      setTimeout(connect, 3000);
+    };
+
+    ws.onerror = () => ws.close();
+  }
+
+  // Load history then connect
+      // Load history then connect
+    fetch('/api/logs')
+      .then(r => r.json())
+      .then(logs => {
+        // Analyze table
+        logs.forEach(entry =>
+          (entry.scans || []).forEach(s => appendScanRow(s, entry.device_id))
+        );
+        // Results grid
+        logs.forEach(entry =>
+          (entry.scans || []).forEach(net => renderResult(net, entry))
+        );
+      })
+      .catch(() => {})
+      .finally(connect);
+  })();
+</script>
+</body>
+</html>

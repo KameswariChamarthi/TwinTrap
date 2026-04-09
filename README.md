@@ -23,6 +23,7 @@ Following are the steps to be taken care of:
 
 <img width="1919" height="875" alt="image" src="https://github.com/user-attachments/assets/39eed7ea-b838-47d9-a695-15d81c3b7da0" />
 <img width="1907" height="877" alt="image" src="https://github.com/user-attachments/assets/b4e33698-f367-406a-8c96-a820fdda7353" />
+<img width="1912" height="875" alt="image" src="https://github.com/user-attachments/assets/02f84a23-1e8f-4381-b5f9-c858ce0b6f4c" />
 <img width="1915" height="874" alt="image" src="https://github.com/user-attachments/assets/0c7ad89c-bd52-4c03-8cd1-585924b3dd4b" />
 <img width="1906" height="873" alt="image" src="https://github.com/user-attachments/assets/b56333c7-c548-4056-8b71-fe56518986a4" />
 
